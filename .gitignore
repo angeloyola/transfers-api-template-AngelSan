@@ -1,0 +1,24 @@
+# Go
+go.work
+go.work.sum
+*.test
+
+# Vendor
+vendor/
+
+# IDE
+.idea/
+
+# OS
+.DS_Store
+
+# Env
+.env
+.env.*
+
+# Temp
+tmp/
+*.tmp
+
+# Project
+output/

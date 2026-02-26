@@ -1,0 +1,42 @@
+services:
+
+  mongodb:
+    image: mongo:4.4
+    container_name: transfers-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    volumes:
+      - mongo_data:/data/db
+
+  app:
+    image: transfers-api:0.1.0
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: transfers-api
+    depends_on:
+      - mongodb
+    ports:
+      - "8080:8080"
+
+    environment:
+      # ---- Business ----
+      TRANSFER_MIN_AMOUNT: 1
+
+      # ---- Mongo ----
+      MONGODB_CONNECT_TIMEOUT: 10s
+      MONGODB_HOSTNAME: mongodb
+      MONGODB_PORT: 27017
+      MONGODB_USERNAME: root
+      MONGODB_PASSWORD: root
+      MONGODB_DATABASE: transfers-db
+      MONGODB_COLLECTION: transfers
+
+    restart: always
+
+volumes:
+  mongo_data:
