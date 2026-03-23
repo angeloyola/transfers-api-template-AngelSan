@@ -45,6 +45,10 @@ func (r *TransfersMySQLRepo) GetByID(ctx context.Context, id string) (models.Tra
 	return models.Transfer{}, fmt.Errorf("mysql repository get by id not implemented")
 }
 
+func (r *TransfersMySQLRepo) GetByUserID(ctx context.Context, userID string) ([]models.Transfer, error) {
+	return nil, fmt.Errorf("mysql repository get by user id not implemented")
+}
+
 func (r *TransfersMySQLRepo) Update(ctx context.Context, transfer models.Transfer) error {
 	return fmt.Errorf("mysql repository update not implemented")
 }
