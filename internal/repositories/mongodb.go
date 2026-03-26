@@ -4,16 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"transfers-api/internal/config"
 	"transfers-api/internal/enums"
 	"transfers-api/internal/known_errors"
 	"transfers-api/internal/logging"
 	"transfers-api/internal/models"
-
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type TransfersMongoDBRepo struct {
@@ -88,37 +87,6 @@ func (r *TransfersMongoDBRepo) GetByID(ctx context.Context, id string) (models.T
 		Amount:     transfer.Amount,
 		State:      transfer.State, // TODO: replace with enums.ParseState
 	}, nil
-}
-
-func (r *TransfersMongoDBRepo) GetByUserID(ctx context.Context, userID string) ([]models.Transfer, error) {
-	cursor, err := r.collection.Find(ctx, bson.M{"sender_id": userID})
-	if err != nil {
-		return nil, fmt.Errorf("error getting transfers by user_id %s: %w", userID, err)
-	}
-	defer cursor.Close(ctx)
-
-	transfers := make([]models.Transfer, 0)
-	for cursor.Next(ctx) {
-		var transfer transferMongoDAO
-		if err := cursor.Decode(&transfer); err != nil {
-			return nil, fmt.Errorf("error decoding transfer from MongoDB: %w", err)
-		}
-
-		transfers = append(transfers, models.Transfer{
-			ID:         transfer.ID.Hex(),
-			SenderID:   transfer.SenderID,
-			ReceiverID: transfer.ReceiverID,
-			Currency:   enums.ParseCurrency(transfer.Currency),
-			Amount:     transfer.Amount,
-			State:      transfer.State,
-		})
-	}
-
-	if err := cursor.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating transfers cursor: %w", err)
-	}
-
-	return transfers, nil
 }
 
 func (r *TransfersMongoDBRepo) Update(ctx context.Context, transfer models.Transfer) error {

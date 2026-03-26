@@ -15,7 +15,6 @@ import (
 type TransfersRepository interface {
 	Create(ctx context.Context, transfer models.Transfer) (string, error)
 	GetByID(ctx context.Context, id string) (models.Transfer, error)
-	GetByUserID(ctx context.Context, userID string) ([]models.Transfer, error)
 	Update(ctx context.Context, transfer models.Transfer) error
 	Delete(ctx context.Context, id string) error
 }
@@ -61,19 +60,6 @@ func (s *TransfersService) GetByID(ctx context.Context, id string) (models.Trans
 		return models.Transfer{}, fmt.Errorf("error getting transfer %s from repository: %w", id, err)
 	}
 	return transfer, nil
-}
-
-func (s *TransfersService) GetByUserID(ctx context.Context, userID string) ([]models.Transfer, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, fmt.Errorf("user_id is required: %w", known_errors.ErrBadRequest)
-	}
-
-	transfers, err := s.transfersRepo.GetByUserID(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("error getting transfers for user %s from repository: %w", userID, err)
-	}
-
-	return transfers, nil
 }
 
 func (s *TransfersService) Update(ctx context.Context, transfer models.Transfer) error {

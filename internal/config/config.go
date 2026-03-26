@@ -2,16 +2,14 @@ package config
 
 import (
 	"encoding/json"
+	"github.com/caarlos0/env/v10"
 	"time"
 	"transfers-api/internal/logging"
-
-	"github.com/caarlos0/env/v10"
 )
 
 type Config struct {
 	Business      BusinessConfig `json:"business"`
 	MongoDBConfig MongoDB        `json:"mongodb"`
-	MySQLConfig   MySQL          `json:"mysql"`
 }
 
 type BusinessConfig struct {
@@ -28,22 +26,11 @@ type MongoDB struct {
 	Collection     string        `env:"MONGODB_COLLECTION" envDefault:"transfers" json:"collection"`
 }
 
-type MySQL struct {
-	ConnectTimeout time.Duration `env:"MYSQL_CONNECT_TIMEOUT" envDefault:"10s" json:"connect_timeout"`
-	Hostname       string        `env:"MYSQL_HOSTNAME" envDefault:"mysql" json:"hostname"`
-	Port           int           `env:"MYSQL_PORT" envDefault:"3306" json:"port"`
-	Username       string        `env:"MYSQL_USERNAME" envDefault:"root" json:"username"`
-	Password       string        `env:"MYSQL_PASSWORD" envDefault:"root" json:"password"`
-	Database       string        `env:"MYSQL_DATABASE" envDefault:"transfers-db" json:"database"`
-	Table          string        `env:"MYSQL_TABLE" envDefault:"transfers" json:"table"`
-}
-
 func ParseFromEnv() *Config {
 	var cfg Config
 	for _, nested := range []interface{}{
 		&cfg.Business,
 		&cfg.MongoDBConfig,
-		&cfg.MySQLConfig,
 	} {
 		if err := env.Parse(nested); err != nil {
 			logging.Logger.Fatalf("error parsing config: %v", err)
