@@ -7,6 +7,7 @@ import (
 	"transfers-api/internal/config"
 	"transfers-api/internal/enums"
 	"transfers-api/internal/known_errors"
+	"transfers-api/internal/logging"
 	"transfers-api/internal/models"
 )
 
@@ -22,12 +23,14 @@ type TransfersRepository interface {
 type TransfersService struct {
 	businessCfg   config.BusinessConfig
 	transfersRepo TransfersRepository
+	localCache    TransfersRepository
 }
 
-func NewTransfersService(businessCfg config.BusinessConfig, transfersRepo TransfersRepository) *TransfersService {
+func NewTransfersService(businessCfg config.BusinessConfig, transfersRepo TransfersRepository, localCache TransfersRepository) *TransfersService {
 	return &TransfersService{
 		businessCfg:   businessCfg,
 		transfersRepo: transfersRepo,
+		localCache:    localCache,
 	}
 }
 
@@ -51,14 +54,36 @@ func (s *TransfersService) Create(ctx context.Context, transfer models.Transfer)
 	if err != nil {
 		return "", fmt.Errorf("error creating transfer in repository: %w", err)
 	}
+
+	transfer.ID = id
+	if s.localCache != nil {
+		if _, cacheErr := s.localCache.Create(ctx, transfer); cacheErr != nil {
+			logging.Logger.Warnf("error saving transfer %s to local cache: %v", id, cacheErr)
+		}
+	}
 	return id, nil
 }
 
 func (s *TransfersService) GetByID(ctx context.Context, id string) (models.Transfer, error) {
+	if s.localCache != nil {
+		cachedTransfer, cacheErr := s.localCache.GetByID(ctx, id)
+		if cacheErr == nil && cachedTransfer.ID != "" {
+			logging.Logger.Infof("transfer retrieved from local cache")
+			return cachedTransfer, nil
+		}
+	}
+
 	transfer, err := s.transfersRepo.GetByID(ctx, id)
 	if err != nil {
 		return models.Transfer{}, fmt.Errorf("error getting transfer %s from repository: %w", id, err)
 	}
+
+	if s.localCache != nil {
+		if _, cacheErr := s.localCache.Create(ctx, transfer); cacheErr != nil {
+			logging.Logger.Warnf("error saving transfer %s to local cache: %v", transfer.ID, cacheErr)
+		}
+	}
+
 	return transfer, nil
 }
 
